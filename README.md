@@ -1,6 +1,6 @@
-# JWT Authentication for the WP REST API
+# JWT Authentication for the WP REST API Extended
 
-A simple plugin to add [JSON Web Token (JWT)](https://tools.ietf.org/html/rfc7519) Authentication to the WP REST API.
+A simple plugin to add [JSON Web Token (JWT)](https://tools.ietf.org/html/rfc7519) Authentication to the WP REST API with additional login and register endpoints.
 
 To know more about JSON Web Tokens, please visit [http://jwt.io](http://jwt.io).
 
@@ -88,7 +88,7 @@ Endpoint | HTTP Verb
 --- | ---
 */wp-json/jwt-auth/v2/login* | POST
 */wp-json/jwt-auth/v2/register* | POST
-*/wp-json/jwt-auth/v1/token/validate* | POST
+*/wp-json/jwt-auth/v2/token/validate* | POST
 
 ##Usage
 ### /wp-json/jwt-auth/v2/login
