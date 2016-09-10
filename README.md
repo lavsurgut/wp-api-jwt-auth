@@ -1,6 +1,6 @@
 # JWT Authentication for the WP REST API Extended
 
-A simple plugin to add [JSON Web Token (JWT)](https://tools.ietf.org/html/rfc7519) Authentication to the WP REST API with additional login and register endpoints.
+A simple plugin to add [JSON Web Token (JWT)](https://tools.ietf.org/html/rfc7519) Authentication to the WP REST API with additional login and register endpoints. It is based on [https://github.com/Tmeister/wp-api-jwt-auth].
 
 To know more about JSON Web Tokens, please visit [http://jwt.io](http://jwt.io).
 
@@ -10,7 +10,7 @@ To know more about JSON Web Tokens, please visit [http://jwt.io](http://jwt.io).
 
 This plugin was conceived to extend the [WP REST API V2](https://github.com/WP-API/WP-API) plugin features and, of course, was built on top of it.
 
-So, to use the **wp-api-jwt-auth** you need to install and activate [WP REST API](https://github.com/WP-API/WP-API).
+So, to use the **wp-api-jwt-auth-ext** you need to install and activate [WP REST API](https://github.com/WP-API/WP-API).
 
 ### PHP
 
@@ -32,15 +32,13 @@ RewriteRule ^(.*) - [E=HTTP_AUTHORIZATION:%1]
 
 #### WPEngine
 
-To enable this option you'll need to edit your **.htaccess** file by adding the following (see https://github.com/Tmeister/wp-api-jwt-auth/issues/1):
-
 ```
 SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
 ```
 
 ## Installation & Configuration
 
-[Download the zip file](https://github.com/Tmeister/wp-api-jwt-auth/archive/master.zip) and install it like any other WordPress plugin.
+[Download the zip file](https://github.com/lasvurgut/wp-api-jwt-auth-ext/archive/master.zip) and install it like any other WordPress plugin.
 
 Or clone this repo into your WordPress installation into the wp-content/plugins folder.
 
@@ -48,24 +46,24 @@ Or clone this repo into your WordPress installation into the wp-content/plugins 
 
 The JWT needs a **secret key** to sign the token. This **secret key** must be unique and never revealed.
 
-To add the **secret key**, edit your wp-config.php file and add a new constant called **JWT_AUTH_SECRET_KEY**.
+To add the **secret key**, edit your wp-config.php file and add a new constant called **JWT_AUTH_EXT_SECRET_KEY**.
 
 
 ```php
-define('JWT_AUTH_SECRET_KEY', 'your-top-secrect-key');
+define('JWT_AUTH_EXT_SECRET_KEY', 'your-top-secrect-key');
 ```
 
 You can use a string from here https://api.wordpress.org/secret-key/1.1/salt/
 
 ### Configurate CORs Support
 
-The **wp-api-jwt-auth** plugin has the option to activate [CORs](https://en.wikipedia.org/wiki/Cross-origin_resource_sharing) support.
+The **wp-api-jwt-auth-ext** plugin has the option to activate [CORs](https://en.wikipedia.org/wiki/Cross-origin_resource_sharing) support.
 
-To enable the CORs Support edit your wp-config.php file and add a new constant called **JWT_AUTH_CORS_ENABLE**
+To enable the CORs Support edit your wp-config.php file and add a new constant called **JWT_AUTH_EXT_CORS_ENABLE**
 
 
 ```php
-define('JWT_AUTH_CORS_ENABLE', true);
+define('JWT_AUTH_EXT_CORS_ENABLE', true);
 ```
 
 
@@ -77,7 +75,7 @@ When the plugin is activated, a new namespace is added.
 
 
 ```
-/jwt-auth/v2
+/jwt-auth-ext/v1
 ```
 
 
@@ -86,12 +84,12 @@ Also, two new endpoints are added to this namespace.
 
 Endpoint | HTTP Verb
 --- | ---
-*/wp-json/jwt-auth/v2/login* | POST
-*/wp-json/jwt-auth/v2/register* | POST
-*/wp-json/jwt-auth/v2/token/validate* | POST
+*/wp-json/jwt-auth-ext/v1/login* | POST
+*/wp-json/jwt-auth-ext/v1/register* | POST
+*/wp-json/jwt-auth-ext/v1/token/validate* | POST
 
 ##Usage
-### /wp-json/jwt-auth/v2/login
+### /wp-json/jwt-auth-ext/v1/login
 
 This is the entry point for the JWT Authentication.
 
@@ -108,7 +106,7 @@ Validates the user credentials, *username* and *password*, and returns a token t
 
     var apiHost = 'http://yourdomain.com/wp-json';
 
-    $http.post( apiHost + '/jwt-auth/v2/login', {
+    $http.post( apiHost + '/jwt-auth-ext/v1/login', {
         username: 'admin',
         password: 'password'
       } )
@@ -143,7 +141,7 @@ Error response from the server:
 
 ```json
 {
-    "code": "jwt_auth_failed",
+    "code": "failed",
     "data": {
         "status": 403
     },
@@ -177,7 +175,7 @@ app.config( function( $httpProvider ) {
 } );
 ```
 
-The **wp-api-jwt-auth** will intercept every call to the server and will look for the authorization header, if the authorization header is present, it will try to decode the token and will set the user according with the data stored in it.
+The **wp-api-jwt-auth-ext** will intercept every call to the server and will look for the authorization header, if the authorization header is present, it will try to decode the token and will set the user according with the data stored in it.
 
 If the token is valid, the API call flow will continue as always.
 
@@ -198,7 +196,7 @@ If the token is invalid an error will be returned. Here are some samples of erro
 ```json
 [
   {
-    "code": "jwt_auth_failed",
+    "code": "jwt_auth_ext_failed",
     "message": "Invalid Credentials.",
     "data": {
       "status": 403
@@ -212,7 +210,7 @@ If the token is invalid an error will be returned. Here are some samples of erro
 ```json
 [
   {
-    "code": "jwt_auth_invalid_token",
+    "code": "jwt_auth_ext_invalid_token",
     "message": "Signature verification failed",
     "data": {
       "status": 403
@@ -226,7 +224,7 @@ If the token is invalid an error will be returned. Here are some samples of erro
 ```json
 [
   {
-    "code": "jwt_auth_invalid_token",
+    "code": "jwt_auth_ext_invalid_token",
     "message": "Expired token",
     "data": {
       "status": 403
@@ -235,7 +233,7 @@ If the token is invalid an error will be returned. Here are some samples of erro
 ]
 ```
 
-### /wp-json/jwt-auth/v2/token/validate
+### /wp-json/jwt-auth-ext/v1/token/validate
 
 This is a simple helper endpoint to validate a token; you only will need to make a POST request sending the Authorization header.
 
@@ -243,7 +241,7 @@ Valid Token Response:
 
 ```json
 {
-  "code": "jwt_auth_valid_token",
+  "code": "jwt_auth_ext_valid_token",
   "data": {
     "status": 200
   }
@@ -252,11 +250,11 @@ Valid Token Response:
 
 ##Available Hooks
 
-The **wp-api-jwt-auth** is dev friendly and has five filters available to override the default settings.
+The **wp-api-jwt-auth-ext** is dev friendly and has five filters available to override the default settings.
 
-####jwt_auth_cors_allow_headers
+####jwt_auth_ext_cors_allow_headers
 
-The **jwt_auth_cors_allow_headers** allows you to modify the available headers when the CORs support is enabled.
+The **jwt_auth_ext_cors_allow_headers** allows you to modify the available headers when the CORs support is enabled.
 
 Default Value:
 
@@ -264,9 +262,9 @@ Default Value:
 'Access-Control-Allow-Headers, Content-Type, Authorization'
 ```
 
-###jwt_auth_not_before
+###jwt_auth_ext_not_before
 
-The **jwt_auth_not_before** allows you to change the [**nbf**](https://tools.ietf.org/html/rfc7519#section-4.1.5) value before the token is created.
+The **jwt_auth_ext_not_before** allows you to change the [**nbf**](https://tools.ietf.org/html/rfc7519#section-4.1.5) value before the token is created.
 
 Default Value:
 
@@ -274,9 +272,9 @@ Default Value:
 Creation time - time()
 ```
 
-###jwt_auth_expire
+###jwt_auth_ext_expire
 
-The **jwt_auth_expire** allows you to change the value [**exp**](https://tools.ietf.org/html/rfc7519#section-4.1.4) before the token is created.
+The **jwt_auth_ext_expire** allows you to change the value [**exp**](https://tools.ietf.org/html/rfc7519#section-4.1.4) before the token is created.
 
 Default Value:
 
@@ -284,9 +282,9 @@ Default Value:
 time() + (DAY_IN_SECONDS * 7)
 ```
 
-###jwt_auth_token_before_sign
+###jwt_auth_ext_token_before_sign
 
-The **jwt_auth_token_before_sign** allows you to modify all the token data before to be encoded and signed.
+The **jwt_auth_ext_token_before_sign** allows you to modify all the token data before to be encoded and signed.
 
 Default value:
 
@@ -305,8 +303,8 @@ $token = array(
 );
 ```
 
-###jwt_auth_token_before_dispatch
-The **jwt_auth_token_before_dispatch** allows you to modify all the response array before to dispatch it to the client.
+###jwt_auth_ext_token_before_dispatch
+The **jwt_auth_ext_token_before_dispatch** allows you to modify all the response array before to dispatch it to the client.
 
 Default value:
 
@@ -332,10 +330,10 @@ includes/vendor/bin/phpunit tests
 
 ![Command Line Output](https://s3.amazonaws.com/f.cl.ly/items/2o0j0a403A0N1a0r1C3H/Image%202016-02-27%20at%208.16.48%20PM.png?v=5fe1c76e)
 
-All the tests can be found at https://github.com/Tmeister/wp-api-jwt-auth/tree/develop/tests/GeneralTest.php
+All the tests can be found at https://github.com/Tmeister/wp-api-jwt-auth-ext/tree/develop/tests/GeneralTest.php
 
 ##Credits
-[WP REST API V2](http://v2.wp-api.org/)
+[WP REST API v2](http://v2.wp-api.org/)
 
 [PHP-JWT from firebase](https://github.com/firebase/php-jwt)
 
