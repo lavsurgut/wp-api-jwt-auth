@@ -77,7 +77,7 @@ When the plugin is activated, a new namespace is added.
 
 
 ```
-/jwt-auth/v1
+/jwt-auth/v2
 ```
 
 
