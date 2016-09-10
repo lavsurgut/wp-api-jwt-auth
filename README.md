@@ -86,11 +86,12 @@ Also, two new endpoints are added to this namespace.
 
 Endpoint | HTTP Verb
 --- | ---
-*/wp-json/jwt-auth/v1/token* | POST
+*/wp-json/jwt-auth/v2/login* | POST
+*/wp-json/jwt-auth/v2/register* | POST
 */wp-json/jwt-auth/v1/token/validate* | POST
 
 ##Usage
-### /wp-json/jwt-auth/v1/token
+### /wp-json/jwt-auth/v2/login
 
 This is the entry point for the JWT Authentication.
 
@@ -107,7 +108,7 @@ Validates the user credentials, *username* and *password*, and returns a token t
 
     var apiHost = 'http://yourdomain.com/wp-json';
 
-    $http.post( apiHost + '/jwt-auth/v1/token', {
+    $http.post( apiHost + '/jwt-auth/v2/login', {
         username: 'admin',
         password: 'password'
       } )
@@ -234,7 +235,7 @@ If the token is invalid an error will be returned. Here are some samples of erro
 ]
 ```
 
-### /wp-json/jwt-auth/v1/token/validate
+### /wp-json/jwt-auth/v2/token/validate
 
 This is a simple helper endpoint to validate a token; you only will need to make a POST request sending the Authorization header.
 
