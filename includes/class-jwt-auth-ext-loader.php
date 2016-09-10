@@ -14,9 +14,9 @@
  * the plugin, and register them with the WordPress API. Call the
  * run function to execute the list of actions and filters.
  *
- * @author     Enrique Chavez <noone@tmeister.net>
+ * @author     Valery Lavrentiev <lavsurgut@gmail.com>
  */
-class Jwt_Auth_Loader
+class Jwt_Auth_Ext_Loader
 {
     /**
      * The array of actions registered with WordPress.

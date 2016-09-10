@@ -6,7 +6,6 @@ use \Firebase\JWT\JWT;
 /**
  * The public-facing functionality of the plugin.
  *
- * @link       https://enriquechavez.co
  * @since      1.0.0
  */
 
@@ -16,9 +15,9 @@ use \Firebase\JWT\JWT;
  * Defines the plugin name, version, and two examples hooks for how to
  * enqueue the admin-specific stylesheet and JavaScript.
  *
- * @author     Enrique Chavez <noone@tmeister.net>
+ * @author     Valery Lavrentiev <lavsurgut@gmail.com>
  */
-class Jwt_Auth_Public
+class Jwt_Auth_Ext_Public
 {
     /**
      * The ID of this plugin.
@@ -72,15 +71,21 @@ class Jwt_Auth_Public
      */
     public function add_api_routes()
     {
-        register_rest_route($this->namespace, 'token', [
+        register_rest_route($this->namespace, 'login', [
             'methods' => 'POST',
             'callback' => array($this, 'generate_token'),
         ]);
+
+        register_rest_route($this->namespace, 'register', array(
+            'methods' => 'POST',
+            'callback' => array($this, 'generate_token'),
+        ));
 
         register_rest_route($this->namespace, 'token/validate', array(
             'methods' => 'POST',
             'callback' => array($this, 'validate_token'),
         ));
+
     }
 
     /**
@@ -88,9 +93,9 @@ class Jwt_Auth_Public
      */
     public function add_cors_support()
     {
-        $enable_cors = defined('JWT_AUTH_CORS_ENABLE') ? JWT_AUTH_CORS_ENABLE : false;
+        $enable_cors = defined('JWT_AUTH_EXT_CORS_ENABLE') ? JWT_AUTH_EXT_CORS_ENABLE : false;
         if ($enable_cors) {
-            $headers = apply_filters('jwt_auth_cors_allow_headers', 'Access-Control-Allow-Headers, Content-Type, Authorization');
+            $headers = apply_filters('jwt_auth_ext_cors_allow_headers', 'Access-Control-Allow-Headers, Content-Type, Authorization');
             header(sprintf('Access-Control-Allow-Headers: %s', $headers));
         }
     }
@@ -104,15 +109,15 @@ class Jwt_Auth_Public
      */
     public function generate_token($request)
     {
-        $secret_key = defined('JWT_AUTH_SECRET_KEY') ? JWT_AUTH_SECRET_KEY : false;
+        $secret_key = defined('JWT_AUTH_EXT_SECRET_KEY') ? JWT_AUTH_EXT_SECRET_KEY : false;
         $username = $request->get_param('username');
         $password = $request->get_param('password');
 
         /** First thing, check the secret key if not exist return a error*/
         if (!$secret_key) {
             return new WP_Error(
-                'jwt_auth_bad_config',
-                __('JWT is not configurated properly, please contact the admin', 'wp-api-jwt-auth'),
+                'jwt_auth_ext_bad_config',
+                __('JWT is not configurated properly, please contact the admin', 'wp-api-jwt-auth-ext'),
                 array(
                     'status' => 403,
                 )
@@ -124,8 +129,8 @@ class Jwt_Auth_Public
         /** If the authentication fails return a error*/
         if (is_wp_error($user)) {
             return new WP_Error(
-                'jwt_auth_failed',
-                __('Invalid Credentials.', 'wp-api-jwt-auth'),
+                'jwt_auth_ext_failed',
+                __('Invalid Credentials.', 'wp-api-jwt-auth-ext'),
                 array(
                     'status' => 403,
                 )
@@ -134,8 +139,8 @@ class Jwt_Auth_Public
 
         /** Valid credentials, the user exists create the according Token */
         $issuedAt = time();
-        $notBefore = apply_filters('jwt_auth_not_before', $issuedAt, $issuedAt);
-        $expire = apply_filters('jwt_auth_expire', $issuedAt + (DAY_IN_SECONDS * 7), $issuedAt);
+        $notBefore = apply_filters('jwt_auth_ext_not_before', $issuedAt, $issuedAt);
+        $expire = apply_filters('jwt_auth_ext_expire', $issuedAt + (DAY_IN_SECONDS * 7), $issuedAt);
 
         $token = array(
             'iss' => get_bloginfo('url'),
@@ -150,7 +155,7 @@ class Jwt_Auth_Public
         );
 
         /** Let the user modify the token data before the sign. */
-        $token = JWT::encode(apply_filters('jwt_auth_token_before_sign', $token), $secret_key);
+        $token = JWT::encode(apply_filters('jwt_auth_ext_token_before_sign', $token), $secret_key);
 
         /** The token is signed, now create the object with no sensible user data to the client*/
         $data = array(
@@ -161,7 +166,7 @@ class Jwt_Auth_Public
         );
 
         /** Let the user modify the data before send it back */
-        return apply_filters('jwt_auth_token_before_dispatch', $data, $user);
+        return apply_filters('jwt_auth_ext_token_before_dispatch', $data, $user);
     }
 
     /**
@@ -186,7 +191,7 @@ class Jwt_Auth_Public
         $token = $this->validate_token(false);
 
         if (is_wp_error($token)) {
-            if ($token->get_error_code() != 'jwt_auth_no_auth_header') {
+            if ($token->get_error_code() != 'jwt_auth_ext_no_auth_header') {
                 /** If there is a error, store it to show it after see rest_pre_dispatch */
                 $this->jwt_error = $token;
                 return $user;
@@ -215,8 +220,8 @@ class Jwt_Auth_Public
         $auth = isset($_SERVER['HTTP_AUTHORIZATION']) ?  $_SERVER['HTTP_AUTHORIZATION'] : false;
         if (!$auth) {
             return new WP_Error(
-                'jwt_auth_no_auth_header',
-                __('Authorization header not found.', 'wp-api-jwt-auth'),
+                'jwt_auth_ext_no_auth_header',
+                __('Authorization header not found.', 'wp-api-jwt-auth-ext'),
                 array(
                     'status' => 403,
                 )
@@ -230,8 +235,8 @@ class Jwt_Auth_Public
         list($token) = sscanf($auth, 'Bearer %s');
         if (!$token) {
             return new WP_Error(
-                'jwt_auth_bad_auth_header',
-                __('Authorization header malformed.', 'wp-api-jwt-auth'),
+                'jwt_auth_ext_bad_auth_header',
+                __('Authorization header malformed.', 'wp-api-jwt-auth-ext'),
                 array(
                     'status' => 403,
                 )
@@ -239,11 +244,11 @@ class Jwt_Auth_Public
         }
 
         /** Get the Secret Key */
-        $secret_key = defined('JWT_AUTH_SECRET_KEY') ? JWT_AUTH_SECRET_KEY : false;
+        $secret_key = defined('JWT_AUTH_EXT_SECRET_KEY') ? JWT_AUTH_EXT_SECRET_KEY : false;
         if (!$secret_key) {
             return new WP_Error(
-                'jwt_auth_bad_config',
-                __('JWT is not configurated properly, please contact the admin', 'wp-api-jwt-auth'),
+                'jwt_auth_ext_bad_config',
+                __('JWT is not configurated properly, please contact the admin', 'wp-api-jwt-auth-ext-ext'),
                 array(
                     'status' => 403,
                 )
@@ -257,8 +262,8 @@ class Jwt_Auth_Public
             if ($token->iss != get_bloginfo('url')) {
                 /** The iss do not match, return error */
                 return new WP_Error(
-                    'jwt_auth_bad_iss',
-                    __('The iss do not match with this server', 'wp-api-jwt-auth'),
+                    'jwt_auth_ext_bad_iss',
+                    __('The iss do not match with this server', 'wp-api-jwt-auth-ext'),
                     array(
                         'status' => 403,
                     )
@@ -268,8 +273,8 @@ class Jwt_Auth_Public
             if (!isset($token->data->user->id)) {
                 /** No user id in the token, abort!! */
                 return new WP_Error(
-                    'jwt_auth_bad_request',
-                    __('User ID not found in the token', 'wp-api-jwt-auth'),
+                    'jwt_auth_ext_bad_request',
+                    __('User ID not found in the token', 'wp-api-jwt-auth-ext'),
                     array(
                         'status' => 403,
                     )
@@ -281,7 +286,7 @@ class Jwt_Auth_Public
             }
             /** If the output is true return an answer to the request to show it */
              return array(
-                 'code' => 'jwt_auth_valid_token',
+                 'code' => 'jwt_auth_ext_valid_token',
                  'data' => array(
                      'status' => 200,
                  ),
@@ -289,7 +294,7 @@ class Jwt_Auth_Public
          } catch (Exception $e) {
             /** Something is wrong trying to decode the token, send back the error */
              return new WP_Error(
-                 'jwt_auth_invalid_token',
+                 'jwt_auth_ext_invalid_token',
                  $e->getMessage(),
                  array(
                      'status' => 403,

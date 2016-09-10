@@ -33,7 +33,7 @@ if (!defined('WPINC')) {
  * The core plugin class that is used to define internationalization,
  * admin-specific hooks, and public-facing site hooks.
  */
-require plugin_dir_path(__FILE__) . 'includes/class-jwt-auth.php';
+require plugin_dir_path(__FILE__) . 'includes/class-jwt-auth-ext.php';
 
 /**
  * Begins execution of the plugin.
@@ -44,9 +44,9 @@ require plugin_dir_path(__FILE__) . 'includes/class-jwt-auth.php';
  *
  * @since    1.0.0
  */
-function run_jwt_auth()
+function run_jwt_auth_ext()
 {
-    $plugin = new Jwt_Auth();
+    $plugin = new Jwt_Auth_Ext();
     $plugin->run();
 }
-run_jwt_auth();
+run_jwt_auth_ext();

@@ -1,15 +1,13 @@
+
 <?php
-
 /**
  * Define the internationalization functionality.
  *
  * Loads and defines the internationalization files for this plugin
  * so that it is ready for translation.
  *
- * @link       https://enriquechavez.co
  * @since      1.0.0
  */
-
 /**
  * Define the internationalization functionality.
  *
@@ -18,9 +16,9 @@
  *
  * @since      1.0.0
  *
- * @author     Enrique Chavez <noone@tmeister.net>
+ * @author     Valery Lavrentiev <lavsurgut@gmail.com>
  */
-class Jwt_Auth_i18n
+class Jwt_Auth_Ext_i18n
 {
     /**
      * The domain specified for this plugin.
@@ -30,7 +28,6 @@ class Jwt_Auth_i18n
      * @var string The domain identifier for this plugin.
      */
     private $domain;
-
     /**
      * Load the plugin text domain for translation.
      *
@@ -44,7 +41,6 @@ class Jwt_Auth_i18n
             dirname(dirname(plugin_basename(__FILE__))).'/languages/'
         );
     }
-
     /**
      * Set the domain equal to that of the specified domain.
      *

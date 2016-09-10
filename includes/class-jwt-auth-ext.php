@@ -21,9 +21,9 @@
  *
  * @since      1.0.0
  *
- * @author     Enrique Chavez <noone@tmeister.net>
+ * @author     Valery Lavrentiev <lavsurgut@gmail.com>
  */
-class Jwt_Auth
+class Jwt_Auth_Ext
 {
     /**
      * The loader that's responsible for maintaining and registering all hooks that power
@@ -31,7 +31,7 @@ class Jwt_Auth
      *
      * @since    1.0.0
      *
-     * @var Jwt_Auth_Loader Maintains and registers all hooks for the plugin.
+     * @var Jwt_Auth_Ext_Loader Maintains and registers all hooks for the plugin.
      */
     protected $loader;
 
@@ -64,8 +64,8 @@ class Jwt_Auth
      */
     public function __construct()
     {
-        $this->plugin_name = 'jwt-auth';
-        $this->version = '1.1.0';
+        $this->plugin_name = 'jwt-auth-ext';
+        $this->version = '1.0.0';
 
         $this->load_dependencies();
         $this->set_locale();
@@ -77,10 +77,10 @@ class Jwt_Auth
      *
      * Include the following files that make up the plugin:
      *
-     * - Jwt_Auth_Loader. Orchestrates the hooks of the plugin.
-     * - Jwt_Auth_i18n. Defines internationalization functionality.
-     * - Jwt_Auth_Admin. Defines all hooks for the admin area.
-     * - Jwt_Auth_Public. Defines all hooks for the public side of the site.
+     * - Jwt_Auth_Ext_Loader. Orchestrates the hooks of the plugin.
+     * - Jwt_Auth_Ext_i18n. Defines internationalization functionality.
+     * - Jwt_Auth_Ext_Admin. Defines all hooks for the admin area.
+     * - Jwt_Auth_Ext_Public. Defines all hooks for the public side of the site.
      *
      * Create an instance of the loader which will be used to register the hooks
      * with WordPress.
@@ -99,34 +99,34 @@ class Jwt_Auth
          * The class responsible for orchestrating the actions and filters of the
          * core plugin.
          */
-        require_once plugin_dir_path(dirname(__FILE__)).'includes/class-jwt-auth-loader.php';
+        require_once plugin_dir_path(dirname(__FILE__)).'includes/class-jwt-auth-ext-loader.php';
 
         /**
          * The class responsible for defining internationalization functionality
          * of the plugin.
          */
-        require_once plugin_dir_path(dirname(__FILE__)).'includes/class-jwt-auth-i18n.php';
+        require_once plugin_dir_path(dirname(__FILE__)).'includes/class-jwt-auth-ext-i18n.php';
 
         /**
          * The class responsible for defining all actions that occur in the public-facing
          * side of the site.
          */
-        require_once plugin_dir_path(dirname(__FILE__)).'public/class-jwt-auth-public.php';
+        require_once plugin_dir_path(dirname(__FILE__)).'public/class-jwt-auth-ext-public.php';
 
-        $this->loader = new Jwt_Auth_Loader();
+        $this->loader = new Jwt_Auth_Ext_Loader();
     }
 
     /**
      * Define the locale for this plugin for internationalization.
      *
-     * Uses the Jwt_Auth_i18n class in order to set the domain and to register the hook
+     * Uses the Jwt_Auth_Ext_i18n class in order to set the domain and to register the hook
      * with WordPress.
      *
      * @since    1.0.0
      */
     private function set_locale()
     {
-        $plugin_i18n = new Jwt_Auth_i18n();
+        $plugin_i18n = new Jwt_Auth_Ext_i18n();
         $plugin_i18n->set_domain($this->get_plugin_name());
         $this->loader->add_action('plugins_loaded', $plugin_i18n, 'load_plugin_textdomain');
     }
@@ -138,7 +138,7 @@ class Jwt_Auth
      */
     private function define_public_hooks()
     {
-        $plugin_public = new Jwt_Auth_Public($this->get_plugin_name(), $this->get_version());
+        $plugin_public = new Jwt_Auth_Ext_Public($this->get_plugin_name(), $this->get_version());
         $this->loader->add_action('rest_api_init', $plugin_public, 'add_api_routes');
         $this->loader->add_filter('rest_api_init', $plugin_public, 'add_cors_support');
         $this->loader->add_filter('determine_current_user', $plugin_public, 'determine_current_user', 99);
@@ -173,7 +173,7 @@ class Jwt_Auth
      *
      * @since     1.0.0
      *
-     * @return Jwt_Auth_Loader Orchestrates the hooks of the plugin.
+     * @return Jwt_Auth_Ext_Loader Orchestrates the hooks of the plugin.
      */
     public function get_loader()
     {
