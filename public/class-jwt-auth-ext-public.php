@@ -6,7 +6,7 @@ use \Firebase\JWT\JWT;
 /**
  * The public-facing functionality of the plugin.
  *
- * @since      1.0.0
+ * @since      1.0.1
  */
 
 /**
@@ -50,6 +50,13 @@ class Jwt_Auth_Ext_Public
      * @var WP_Error
      */
     private $jwt_error = null;
+    /**
+     * The JWT secret key.
+     *
+     * @var string The namespace to add to the api call
+     */
+
+    private $secret_key = null;
 
     /**
      * Initialize the class and set its properties.
@@ -64,6 +71,7 @@ class Jwt_Auth_Ext_Public
         $this->plugin_name = $plugin_name;
         $this->version = $version;
         $this->namespace = $this->plugin_name.'/v'.intval($this->version);
+        $this->secret_key = defined('JWT_AUTH_EXT_SECRET_KEY') ? JWT_AUTH_EXT_SECRET_KEY : false;
     }
 
     /**
@@ -73,12 +81,14 @@ class Jwt_Auth_Ext_Public
     {
         register_rest_route($this->namespace, 'login', [
             'methods' => 'POST',
-            'callback' => array($this, 'generate_token'),
+            'callback' => array($this, 'login_user'),
+            'permission_callback' => array($this, 'validate_secret_key')
         ]);
 
         register_rest_route($this->namespace, 'register', array(
             'methods' => 'POST',
-            'callback' => array($this, 'generate_token'),
+            'callback' => array($this, 'register_user'),
+            'permission_callback' => array($this, 'validate_secret_key')
         ));
 
         register_rest_route($this->namespace, 'token/validate', array(
@@ -101,20 +111,14 @@ class Jwt_Auth_Ext_Public
     }
 
     /**
-     * Get the user and password in the request body and generate a JWT
+     * Perform validation checks
      *
-     * @param [type] $request [description]
-     *
-     * @return [type] [description]
+     * @return WP_Error|boolean
      */
-    public function generate_token($request)
-    {
-        $secret_key = defined('JWT_AUTH_EXT_SECRET_KEY') ? JWT_AUTH_EXT_SECRET_KEY : false;
-        $username = $request->get_param('username');
-        $password = $request->get_param('password');
 
+    public function validate_secret_key () {
         /** First thing, check the secret key if not exist return a error*/
-        if (!$secret_key) {
+        if (!$this->secret_key) {
             return new WP_Error(
                 'jwt_auth_ext_bad_config',
                 __('JWT is not configurated properly, please contact the admin', 'wp-api-jwt-auth-ext'),
@@ -122,7 +126,46 @@ class Jwt_Auth_Ext_Public
                     'status' => 403,
                 )
             );
+        } else {
+            return true;
         }
+
+    }
+
+    /**
+     * Form response for the user
+     *
+     * @param string $token
+     * @param Wp_User $user
+     *
+     * @return WP_Error|WP_REST_Response $response
+     */
+
+    private function form_response ($token, $user) {
+        /** The token is signed, now create the object with no sensible user data to the client*/
+        $data = array(
+            'token' => $token,
+            'user_first_name' => $user->first_name,
+            'user_login' => $user->user_login,
+            'user_id' => $user->ID
+        );
+        /** Valid credentials, the user exists create the according Token and return it */
+        return apply_filters('jwt_auth_ext_token_before_dispatch', $data, $user);
+    }
+
+    /**
+     * Get the user and password in the request body, login and generate a JWT
+     *
+     * @param WP_REST_Request $request
+     *
+     * @return WP_Error|WP_REST_Response $response
+     */
+
+    public function login_user ($request) {
+
+        $username = $request->get_param('username');
+        $password = $request->get_param('password');
+
         /** Try to authenticate the user with the passed credentials*/
         $user = wp_authenticate($username, $password);
 
@@ -137,7 +180,70 @@ class Jwt_Auth_Ext_Public
             );
         }
 
-        /** Valid credentials, the user exists create the according Token */
+        $token = $this->generate_token($user);
+
+        return $this->form_response($token, $user);
+
+    }
+    /**
+     * Get the new user in the request body, register and generate a JWT
+     *
+     * @param WP_REST_Request $request
+     *
+     * @return WP_Error| WP_REST_Response $response
+     */
+
+    public function register_user ($request) {
+
+        $userdata = array(
+            'user_login'  =>  $request->get_param('username'),
+            'user_email'    =>  $request->get_param('user_email'),
+            'first_name'    =>  $request->get_param('first_name'),
+            'last_name'    =>  $request->get_param('last_name'),
+            'user_pass'   =>  $request->get_param('password')
+        );
+
+        if (!get_user_by( 'email', $userdata['user_email']))
+        {
+            $user_id = wp_insert_user( $userdata );
+        } else {
+            return new WP_Error(
+                'jwt_auth_ext_failed',
+                __('User already exists.', 'wp-api-jwt-auth-ext'),
+                array(
+                    'status' => 403,
+                )
+            );
+        }
+
+        $user = get_userdata( $user_id );
+
+        /** If the authentication fails return a error*/
+        if (is_wp_error($user)) {
+            return new WP_Error(
+                'jwt_auth_ext_failed',
+                __('Invalid Credentials.', 'wp-api-jwt-auth-ext'),
+                array(
+                    'status' => 403,
+                )
+            );
+        }
+
+        $token = $this->generate_token($user);
+
+        return $this->form_response($token, $user);
+
+    }
+
+    /**
+     * Get generate a JWT
+     *
+     * @param WP_User $user user to generate token for
+     *
+     * @return string $token generated token
+     */
+    private function generate_token($user)
+    {
         $issuedAt = time();
         $notBefore = apply_filters('jwt_auth_ext_not_before', $issuedAt, $issuedAt);
         $expire = apply_filters('jwt_auth_ext_expire', $issuedAt + (DAY_IN_SECONDS * 7), $issuedAt);
@@ -155,18 +261,10 @@ class Jwt_Auth_Ext_Public
         );
 
         /** Let the user modify the token data before the sign. */
-        $token = JWT::encode(apply_filters('jwt_auth_ext_token_before_sign', $token), $secret_key);
-
-        /** The token is signed, now create the object with no sensible user data to the client*/
-        $data = array(
-            'token' => $token,
-            'user_email' => $user->data->user_email,
-            'user_nicename' => $user->data->user_nicename,
-            'user_display_name' => $user->data->display_name,
-        );
+        $token = JWT::encode(apply_filters('jwt_auth_ext_token_before_sign', $token), $this->secret_key);
 
         /** Let the user modify the data before send it back */
-        return apply_filters('jwt_auth_ext_token_before_dispatch', $data, $user);
+        return $token;
     }
 
     /**
@@ -243,21 +341,14 @@ class Jwt_Auth_Ext_Public
             );
         }
 
-        /** Get the Secret Key */
-        $secret_key = defined('JWT_AUTH_EXT_SECRET_KEY') ? JWT_AUTH_EXT_SECRET_KEY : false;
-        if (!$secret_key) {
-            return new WP_Error(
-                'jwt_auth_ext_bad_config',
-                __('JWT is not configurated properly, please contact the admin', 'wp-api-jwt-auth-ext-ext'),
-                array(
-                    'status' => 403,
-                )
-            );
+        /** Check the Secret Key */
+        if (is_wp_error( $this->validate_secret_key() ) ) {
+            return $this->validate_secret_key();
         }
 
         /** Try to decode the token */
         try {
-            $token = JWT::decode($token, $secret_key, array('HS256'));
+            $token = JWT::decode($token, $this->secret_key, array('HS256'));
             /** The Token is decoded now validate the iss */
             if ($token->iss != get_bloginfo('url')) {
                 /** The iss do not match, return error */

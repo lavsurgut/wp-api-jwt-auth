@@ -8,16 +8,14 @@
  * registers the activation and deactivation functions, and defines a function
  * that starts the plugin.
  *
- * @link              https://enriquechavez.co
  * @since             1.0.0
  *
  * @wordpress-plugin
- * Plugin Name:       JWT Authentication for WP-API
- * Plugin URI:        https://enriquechavez.co
- * Description:       Extends the WP REST API using JSON Web Tokens Authentication as an authentication method.
- * Version:           1.1.0
- * Author:            Enrique Chavez
- * Author URI:        https://enriquechavez.co
+ * Plugin Name:       JWT Authentication Extended for WP-API
+ * Description:       Extends the WP REST API using JSON Web Tokens Authentication as an authentication method with
+ *                    additional login and register endpoints.
+ * Version:           1.0.0
+ * Author:            Valery Lavrentiev
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       jwt-auth
@@ -33,7 +31,7 @@ if (!defined('WPINC')) {
  * The core plugin class that is used to define internationalization,
  * admin-specific hooks, and public-facing site hooks.
  */
-require plugin_dir_path(__FILE__) . 'includes/class-jwt-auth-ext.php';
+require plugin_dir_path(__FILE__) . 'includes/class-cp-rest-api.php';
 
 /**
  * Begins execution of the plugin.
